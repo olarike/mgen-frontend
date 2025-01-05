@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "../components/ui/use-toast";
 
 const MAX_TAGLINE_LENGTH = 100;
 
@@ -16,7 +16,6 @@ export default function BestMemePage() {
   const [tagline, setTagline] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const validateTagline = (text: string): string | null => {
     if (!text.trim()) {
@@ -33,13 +32,21 @@ export default function BestMemePage() {
     setError(null);
 
     if (!publicKey) {
-      setError("Please connect your wallet first");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please connect your wallet first"
+      });
       return;
     }
 
     const validationError = validateTagline(tagline);
     if (validationError) {
-      setError(validationError);
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: validationError
+      });
       return;
     }
 
@@ -49,7 +56,11 @@ export default function BestMemePage() {
       // Check token ownership
       const hasTokens = await checkTokenOwnership(publicKey.toBase58());
       if (!hasTokens) {
-        setError("You need to own MGEN tokens to submit taglines");
+        toast({
+          variant: "destructive",
+          title: "Token Required",
+          description: "You need to own MGEN tokens to submit taglines"
+        });
         return;
       }
 
@@ -79,7 +90,11 @@ export default function BestMemePage() {
 
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Failed to submit tagline");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to submit tagline"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -106,12 +121,6 @@ export default function BestMemePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleBestMemeSubmit} className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
               <div className="relative">
                 <Input
@@ -122,7 +131,11 @@ export default function BestMemePage() {
                   className="pr-20"
                   disabled={isLoading}
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                <span 
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 text-sm ${
+                    remainingCharacters < 20 ? 'text-red-500' : 'text-muted-foreground'
+                  }`}
+                >
                   {remainingCharacters}
                 </span>
               </div>
@@ -144,7 +157,7 @@ export default function BestMemePage() {
             </Button>
 
             {!publicKey && (
-              <p className="text-sm text-center text-gray-500">
+              <p className="text-sm text-center text-muted-foreground">
                 Connect your wallet to submit a tagline
               </p>
             )}
